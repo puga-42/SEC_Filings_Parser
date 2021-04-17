@@ -71,7 +71,20 @@ def parse_filing(filing_location, desired_document):
 
 
 
-def split_by_section(tenk_code_dict):
+def split_by_section(document, document_type):
+    if document_type == '10-K':
+        return_dict = split_tenk_by_section(document)
+    
+    elif document_type == '10-Q':
+        return_dict = split_tenq_by_section(document)
+
+    elif document_type == '8-K':
+        return_dict = split_eightk_by_section(document)
+
+    return return_dict
+
+
+def split_tenk_by_section(tenk_code_dict):
     
     #initialize master 10-k dict
     tenk_document_dict = {}
@@ -133,11 +146,18 @@ def split_by_section(tenk_code_dict):
     return tenk_document_dict
 
 
-def get_tenk_text(tenk_code_dict):
+def split_tenq_by_section(tenq_code_dict):
+    print('We currently have no structure in place to parse 10-Q. Please try again later!')
+
+def split_eightk_by_section(eightk_code_dict):
+    print('We currently have no structure in place to parse an 8-K. Please try again later!')
+    return {}
+
+def get_filing_doc_text(filing_doc_code_dict):
     tenk_text_dict = {}
     
-    for key in tenk_code_dict.keys():
-        raw_text = bsoup_extract_from_string(tenk_code_dict[key])
+    for key in filing_doc_code_dict.keys():
+        raw_text = bsoup_extract_from_string(filing_doc_code_dict[key])
         decoded_text = decode_text(raw_text)
         decoded_text = remove_extra_spaces(decoded_text)
         tenk_text_dict[key] = decoded_text
@@ -145,9 +165,14 @@ def get_tenk_text(tenk_code_dict):
     return tenk_text_dict
 
 
-def get_tenk_text_dict(filing_location):
-    tenk_dict = parse_filing(filing_location, '10-K')
-    code_dict = split_by_section(tenk_dict)
-    text_dict = get_tenk_text(code_dict)
+def get_text_dict(filing_location, filing_doc):
+    doc_dict = parse_filing(filing_location, filing_doc)
+    code_dict = split_by_section(doc_dict, filing_doc)
+    text_dict = get_filing_doc_text(code_dict)
 
     return text_dict
+
+# def get_tenq_text_dict(filing_location):
+#     tenq_dict = parse_filing(filing_location, '10-Q')
+#     code_dict = split_by_section(tenq_dict)  
+#     text_dict = 
