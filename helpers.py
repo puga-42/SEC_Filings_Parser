@@ -16,6 +16,15 @@ def bsoup_extract_from_string(string):
     return ' '.join(BeautifulSoup(string, "html.parser").findAll(text=True))
 
 def decode_text(string):
+    '''
+    Inputs: str
+    Outputs: str
+
+    Takes in a string with unicode characters and outputs string with unicode characters removed. 
+
+    This should be a temporary function for readability - there are probably more elegant and complete solutions out there.
+    '''
+
     string = str_rep(string, ['\n', '\xa0', '\x95', 
                 '\x92', '\x94', '\x97', '\x93'], [' ', ' ', ' ', 
                                           '', ' ', ' ', ' '])
@@ -42,9 +51,14 @@ def parse_filing(filing_location, desired_document):
     htmlText = filing_location
     #get response
     response = requests.get(htmlText)
+
     # parse response
     soup = BeautifulSoup(response.content, 'lxml')
-    
+
+    # if stand_alone_text == True:
+
+    #     return soup
+
     #initialize dict to hold all unique documents present in filing
     master_document_dict = {}
 
@@ -52,10 +66,19 @@ def parse_filing(filing_location, desired_document):
     for filing_document in soup.find_all('document'):
         # define the document type, found under the <type> tag, this will serve as our key for the dictionary.
         document_id = filing_document.type.find(text=True, recursive=False).strip()
+        print(document_id)
         document_sequence = filing_document.sequence.find(text=True, recursive=False).strip()
+        print(document_sequence)
         document_filename = filing_document.filename.find(text=True, recursive=False).strip()
-        document_description = filing_document.description.find(text=True, recursive=False).strip()
+        print(document_filename)
+        try:
+            document_description = filing_document.description.find(text=True, recursive=False).strip()
+        except Exception:
+            document_description = None
+            
+        print(document_description)
 
+        
         # initalize our document dictionary
         master_document_dict[document_id] = {}
 
@@ -72,6 +95,15 @@ def parse_filing(filing_location, desired_document):
 
 
 def split_by_section(document, document_type):
+    '''
+    inputs: dict, str
+    outputs: dict
+
+    Takes in document, a dictionary, and document_type, a string indicating what document it is. 
+    Calls correct splitting function and returns split dict.
+
+    '''
+
     if document_type == '10-K':
         return_dict = split_tenk_by_section(document)
     
