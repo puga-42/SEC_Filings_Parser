@@ -66,17 +66,13 @@ def parse_filing(filing_location, desired_document):
     for filing_document in soup.find_all('document'):
         # define the document type, found under the <type> tag, this will serve as our key for the dictionary.
         document_id = filing_document.type.find(text=True, recursive=False).strip()
-        print(document_id)
         document_sequence = filing_document.sequence.find(text=True, recursive=False).strip()
-        print(document_sequence)
         document_filename = filing_document.filename.find(text=True, recursive=False).strip()
-        print(document_filename)
         try:
             document_description = filing_document.description.find(text=True, recursive=False).strip()
         except Exception:
             document_description = None
             
-        print(document_description)
 
         
         # initalize our document dictionary
@@ -203,6 +199,40 @@ def get_text_dict(filing_location, filing_doc):
     text_dict = get_filing_doc_text(code_dict)
 
     return text_dict
+
+
+
+def get_table_of_contents(filingcode):
+    
+    '''
+    outputs list of text elements from first with hrefs in an html doc. Might work, but will need to test
+    
+    to use:
+    1. call parse_filing with appropriate .txt location and document type. filing = parse_filing()
+    2. use filing['document code'] as parameter
+    
+    Inputs:
+    filingcode - bs4 tag in html format
+    
+    Returns:
+    text_list - list of text elements of table of contents hopefully
+    
+    '''
+    href_list = []
+    text_list = []
+    
+    #get all tables in html
+    all_tables = filingcode.find_all('table')
+    
+    #table of contents should have elements as hrefs
+    for table in all_tables:
+        if len(table.find_all('a', href=True)) > 0:
+            href_list.append(table.find_all('a', href=True))
+    
+    for href in href_list[0]:
+        text_list.append(href.text)
+    
+    return text_list
 
 # def get_tenq_text_dict(filing_location):
 #     tenq_dict = parse_filing(filing_location, '10-Q')
