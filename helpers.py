@@ -38,7 +38,7 @@ def tenK_to_dict():
         tenK_dict[section] = {}
 
     
-def parse_filing(filing_location, desired_document):    
+def parse_filing(filing_location, cik, master_dict):    
 
     '''
     Inputs: str, str
@@ -48,45 +48,48 @@ def parse_filing(filing_location, desired_document):
     Returns the dictionary indicated by desired_document
     '''
 
-    htmlText = filing_location
+    
     #get response
-    response = requests.get(htmlText)
-
+    response = requests.get(filing_location)
     # parse response
     soup = BeautifulSoup(response.content, 'lxml')
 
-    # if stand_alone_text == True:
 
-    #     return soup
+    ## check to see how deep the master_dict goes
+    if cik not in master_dict.keys():
+        print('new company')
+        #initialize dict to hold all unique documents present in filing
+        master_dict[cik] = {'10-K': {}, '10-Q': {}}
 
-    #initialize dict to hold all unique documents present in filing
-    master_document_dict = {}
+
+    ## store header as a place holder for the date. We will parse that out later 
+    sec_header_tag = soup.find('sec-header')
+    
+
 
     # find all the documents in the filing.
-
-    for filing_document in soup.find_all('document'):
-        # define the document type, found under the <type> tag, this will serve as our key for the dictionary.
+    for filing_document in soup.find_all('document'):        
+        #document id will be 10-K or 10-Q (or others but we don't care about those rn)
         document_id = filing_document.type.find(text=True, recursive=False).strip()
-        document_sequence = filing_document.sequence.find(text=True, recursive=False).strip()
         document_filename = filing_document.filename.find(text=True, recursive=False).strip()
-        try:
-            document_description = filing_document.description.find(text=True, recursive=False).strip()
-        except Exception:
-            document_description = None
+
+        ## we only want docuent id of 10-K or 10-Q
+        if (document_id == '10-K') or (document_id == '10-Q'):
+            ## we'll use header tag as a placeholder for date - will parse out later
+            master_dict[cik][document_id][document_filename] = {'header': sec_header_tag, 'document_code': filing_document.extract()}
+            # master_dict[cik][document_id][document_filename]['document_code'] = filing_document.extract()
             
 
-        
-        # initalize our document dictionary
-        master_document_dict[document_id] = {}
 
-        # add the different parts, we parsed up above.
-        master_document_dict[document_id]['document_sequence'] = document_sequence
-        master_document_dict[document_id]['document_filename'] = document_filename
-        master_document_dict[document_id]['document_description'] = document_description
+        # # add the different parts, we parsed up above.
+        # master_document_dict[document_id]['document_sequence'] = document_sequence
+        # master_dict[document_id]['document_filename'] = document_filename
+        # master_document_dict[document_id]['document_description'] = document_description
 
         # store the document itself, this portion extracts the HTML code. We will have to reparse it later.
-        master_document_dict[document_id]['document_code'] = filing_document.extract()
-    return master_document_dict[desired_document]
+        # master_document_dict[document_id]['document_code'] = filing_document.extract()
+    
+    return master_dict
 
 
 
