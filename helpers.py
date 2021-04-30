@@ -65,31 +65,19 @@ def parse_filing(filing_location, cik, master_dict):
     ## store header as a place holder for the date. We will parse that out later 
     sec_header_tag = soup.find('sec-header')
     
-
-
     # find all the documents in the filing.
     for filing_document in soup.find_all('document'):        
         #document id will be 10-K or 10-Q (or others but we don't care about those rn)
         document_id = filing_document.type.find(text=True, recursive=False).strip()
+        print('from parse_filing. document_id: ', document_id)
         document_filename = filing_document.filename.find(text=True, recursive=False).strip()
 
         ## we only want docuent id of 10-K or 10-Q
         if (document_id == '10-K') or (document_id == '10-Q'):
             ## we'll use header tag as a placeholder for date - will parse out later
-            master_dict[cik][document_id][document_filename] = {'header': sec_header_tag, 'document_code': filing_document.extract()}
-            # master_dict[cik][document_id][document_filename]['document_code'] = filing_document.extract()
+            master_dict[cik][document_id][document_filename] = {'header': sec_header_tag, 'document_code': filing_document.extract(), 'table_of_contents': {}}
             
-
-
-        # # add the different parts, we parsed up above.
-        # master_document_dict[document_id]['document_sequence'] = document_sequence
-        # master_dict[document_id]['document_filename'] = document_filename
-        # master_document_dict[document_id]['document_description'] = document_description
-
-        # store the document itself, this portion extracts the HTML code. We will have to reparse it later.
-        # master_document_dict[document_id]['document_code'] = filing_document.extract()
-    
-    return master_dict
+            return master_dict, document_id, document_filename
 
 
 
@@ -198,6 +186,7 @@ def get_filing_doc_text(filing_doc_code_dict):
     return tenk_text_dict
 
 
+## this is not used
 def get_text_dict(filing_location, filing_doc):
     doc_dict = parse_filing(filing_location, filing_doc)
     code_dict = split_by_section(doc_dict, filing_doc)
@@ -235,7 +224,7 @@ def get_table_of_contents(filingcode):
             href_list.append(table.find_all('a', href=True))
     
     for href in href_list[0]:
-        text_list.append(href.text)
+        text_list.append(href.text.lower())
     
     pruned_list = prune_toc(text_list)
 
@@ -279,7 +268,7 @@ def check_regex(word):
     returns - True or False depending on whether a pattern is found
     '''
     
-    check_1 = re.findall(r"^\D{4}\s[\d+ | I]", word)
+    check_1 = re.findall(r"^\D{4}\s[\d+ | i]", word)
     check_2 = re.findall(r"^\d{1,3}", word)
     if len(check_1) or len(check_2) > 0:
         
